@@ -1,34 +1,39 @@
+from datetime import datetime
 import enum
-from sqlalchemy import Text, Integer, Column, VARCHAR, Boolean, ForeignKey
-from sqlalchemy_utils import ChoiceType, URLType
+
+from sqlalchemy import Enum, Column, ForeignKey, Integer, String, Text, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy_utils import URLType
 
 from ..db_setup import Base
-from .mixins import TimeStamp
 from .user import User
+from .mixins import TimeStamp
 
 
 class ContentType(enum.Enum):
     lesson = 1
     quiz = 2
     assignment = 3
-    
+
+
 class Course(TimeStamp, Base):
     __tablename__ = "courses"
+
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(VARCHAR(100), nullable=False)
-    description = Column(Text, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
     created_by = relationship(User)
     sections = relationship("Section", back_populates="course", uselist=False)
-    student_course = relationship("StudentCourse", back_populates="course")
+    student_courses = relationship("StudentCourse", back_populates="course")
+
 
 class Section(TimeStamp, Base):
     __tablename__ = "sections"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(VARCHAR(200), nullable=False)
+    title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
 
@@ -40,9 +45,9 @@ class ContentBlock(TimeStamp, Base):
     __tablename__ = "content_blocks"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(VARCHAR(200), nullable=False)
+    title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    type = Column(ChoiceType(ContentType))
+    type = Column(Enum(ContentType))
     url = Column(URLType, nullable=True)
     content = Column(Text, nullable=True)
     section_id = Column(Integer, ForeignKey("sections.id"), nullable=False)

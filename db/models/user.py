@@ -1,29 +1,40 @@
 import enum
-from sqlalchemy import Text, Integer, Column, VARCHAR, Boolean, ForeignKey
-from sqlalchemy_utils import EmailType, ChoiceType
+
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.expression import null
+
 from ..db_setup import Base
 from .mixins import TimeStamp
- 
-class Role(enum.Enum):
+
+
+class Role(enum.IntEnum):
     teacher = 1
     student = 2
-    
+
+
 class User(TimeStamp, Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(EmailType)
-    roles = Column(ChoiceType(Role))
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    role = Column(Enum(Role))
     is_active = Column(Boolean, default=False)
+
     profile = relationship("Profile", back_populates="owner", uselist=False)
+    student_courses = relationship("StudentCourse", back_populates="student")
+    student_content_blocks = relationship(
+        "CompletedContentBlock", back_populates="student")
+
 
 class Profile(TimeStamp, Base):
     __tablename__ = "profiles"
+
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(VARCHAR(100), nullable=False)
-    last_name = Column(VARCHAR(100), nullable=False)
-    bio = Column(Text, nullable=True, default=None)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    bio = Column(Text, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    owner = relationship("User", back_populates="profile")
     
-    owner = relationship("User", back_populates="profile") 
